@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!--
+  All robot dimensions live here. Units: meters, kilograms, radians, N*m, rad/s.
+  Change a number here and the whole model updates.
+
+  Source key:
+    [drawing]   taken from the mech team's sketches
+    [assumed]   placeholder, replace when a real value is known
+    [datasheet] servo datasheet value
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ===== Body / frame ===== -->
+  <xacro:property name="body_length" value="0.600"/>   <!-- [drawing] side view, 600 mm -->
+  <xacro:property name="body_width"  value="0.200"/>   <!-- [drawing] front view, 200 mm -->
+  <xacro:property name="body_height" value="0.150"/>   <!-- [drawing] front view, 150 mm -->
+
+  <!-- Total robot mass. 4 kg anticipates the switch to a metal frame. -->
+  <xacro:property name="total_mass" value="4.0"/>      <!-- [assumed] -->
+
+  <!-- ===== Leg mount layout (top view) =====
+       Legs are lf/lm/lr (left front/middle/rear) and rf/rm/rr.
+       +x is "front". Mounts sit at leg_x_offset + {+leg_spacing, 0, -leg_spacing}.
+       Top view: brackets on holes 2, 6, 10 of 12 along 600 mm, so 200 mm apart
+       and the set is shifted 25 mm toward one end. Flip the sign of
+       leg_x_offset if that end turns out to be the front, or set 0 to center. -->
+  <xacro:property name="leg_spacing"  value="0.200"/>  <!-- [drawing] -->
+  <xacro:property name="leg_x_offset" value="-0.025"/> <!-- [drawing] sign [assumed] -->
+
+  <!-- ===== Mounting bracket (fixed to frame, holds the LX-16A) ===== -->
+  <xacro:property name="bracket_height"    value="0.150"/>  <!-- [drawing] -->
+  <xacro:property name="bracket_width"     value="0.025"/>  <!-- [drawing] -->
+  <xacro:property name="bracket_thickness" value="0.0125"/> <!-- [drawing] -->
+  <xacro:property name="bracket_mass"      value="0.08"/>   <!-- [assumed] bracket + LX-16A (~52 g) -->
+
+  <!-- Hip (LX-16A) axis height relative to body center. Drawing shows the
+       servo near the bottom of the bracket: 12.5 mm above the frame bottom. -->
+  <xacro:property name="hip_z" value="${-body_height/2 + 0.0125}"/> <!-- [drawing, approx] -->
+
+  <!-- ===== Leg links (pivot to pivot) =====
+       coxa  = Leg Connector A, swung by the LX-16A (xy plane), carries MG-996R #1
+       femur = Leg Connector B, driven by MG-996R #1 (yz plane), carries MG-996R #2
+       tibia = foot segment,    driven by MG-996R #2 (yz plane) -->
+  <xacro:property name="coxa_length"  value="0.075"/> <!-- [drawing] 70-80 mm, midpoint -->
+  <xacro:property name="femur_length" value="0.075"/> <!-- [drawing] 70-80 mm, midpoint -->
+  <xacro:property name="tibia_length" value="0.100"/> <!-- [drawing] ~100 mm -->
+
+  <xacro:property name="coxa_section_w"  value="0.030"/>  <!-- [assumed] -->
+  <xacro:property name="coxa_section_h"  value="0.045"/>  <!-- [drawing] ~45 mm -->
+  <xacro:property name="femur_section_w" value="0.030"/>  <!-- [assumed] -->
+  <xacro:property name="femur_section_h" value="0.035"/>  <!-- [drawing] ~35 mm -->
+  <xacro:property name="tibia_section"   value="0.012"/>  <!-- [drawing] ~10 mm -->
+  <xacro:property name="foot_radius"     value="0.008"/>  <!-- [assumed] stand-in for microspines -->
+
+  <xacro:property name="coxa_mass"  value="0.12"/> <!-- [assumed] connector + MG-996R (~55 g) -->
+  <xacro:property name="femur_mass" value="0.12"/> <!-- [assumed] connector + MG-996R -->
+  <xacro:property name="tibia_mass" value="0.04"/> <!-- [assumed] -->
+
+  <!-- Whatever is left after the legs is the body (frame, Jetson, battery, ...). -->
+  <xacro:property name="body_mass"
+    value="${total_mass - 6*(bracket_mass + coxa_mass + femur_mass + tibia_mass)}"/>
+
+  <!-- ===== Joint limits =====
+       Zero for every joint = standing pose (femur level, foot straight down).
+       Sign conventions:
+         hip   +  : counter-clockwise seen from above (left legs swing rearward,
+                    right legs swing forward)
+         femur +  : leg lifts up
+         tibia +  : foot swings outward (knee extends)                           -->
+  <xacro:property name="hip_limit"   value="${radians(120)}"/> <!-- [datasheet] LX-16A 0-240 deg -->
+  <xacro:property name="femur_limit" value="${radians(90)}"/>  <!-- [datasheet] MG-996R ~180 deg -->
+  <xacro:property name="tibia_limit" value="${radians(90)}"/>  <!-- [datasheet] -->
+
+  <!-- Torque and speed limits. Keeping these realistic is what makes the sim honest. -->
+  <xacro:property name="lx16a_effort"    value="1.67"/> <!-- [datasheet] ~17 kg*cm -->
+  <xacro:property name="lx16a_velocity"  value="6.5"/>  <!-- [datasheet] ~0.16 s / 60 deg -->
+  <xacro:property name="mg996r_effort"   value="1.08"/> <!-- [datasheet] ~11 kg*cm at 6 V -->
+  <xacro:property name="mg996r_velocity" value="7.0"/>  <!-- [datasheet] ~0.14-0.17 s / 60 deg -->
+  <xacro:property name="joint_damping"   value="0.05"/> <!-- [assumed] -->
+  <xacro:property name="joint_friction"  value="0.02"/> <!-- [assumed] -->
+
+  <!-- Foot friction against the ground. Microspines will change this later. -->
+  <xacro:property name="foot_mu" value="1.2"/> <!-- [assumed] -->
+
+</robot>

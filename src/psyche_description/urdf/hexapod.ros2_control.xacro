@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!--
+  ros2_control hardware declaration: the seam between sim and the real rover.
+
+  Everything above this layer (controllers, gait code) only sees 18 position-
+  controlled joints. Which hardware plugin backs them is chosen here:
+    use_sim:=true   -> Gazebo (gz_ros2_control)
+    use_sim:=false  -> mock_components/GenericSystem for now (echoes commands back,
+                       no hardware). This is where the real Jetson -> Arduino
+                       serial plugin will go once the wiring and payload exist.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="position_joint" params="name limit">
+    <joint name="${name}">
+      <command_interface name="position">
+        <param name="min">${-limit}</param>
+        <param name="max">${limit}</param>
+      </command_interface>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <!-- Lets /joint_states report torque, so you can see how close each
+           servo is to its limit. -->
+      <state_interface name="effort"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="leg_joints" params="leg">
+    <xacro:position_joint name="${leg}_hip_joint"   limit="${hip_limit}"/>
+    <xacro:position_joint name="${leg}_femur_joint" limit="${femur_limit}"/>
+    <xacro:position_joint name="${leg}_tibia_joint" limit="${tibia_limit}"/>
+  </xacro:macro>
+
+  <xacro:macro name="hexapod_ros2_control" params="use_sim controllers_file">
+    <ros2_control name="HexapodSystem" type="system">
+      <hardware>
+        <xacro:if value="${use_sim}">
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </xacro:if>
+        <xacro:unless value="${use_sim}">
+          <plugin>mock_components/GenericSystem</plugin>
+        </xacro:unless>
+      </hardware>
+      <xacro:leg_joints leg="lf"/>
+      <xacro:leg_joints leg="lm"/>
+      <xacro:leg_joints leg="lr"/>
+      <xacro:leg_joints leg="rf"/>
+      <xacro:leg_joints leg="rm"/>
+      <xacro:leg_joints leg="rr"/>
+    </ros2_control>
+
+    <xacro:if value="${use_sim}">
+      <gazebo>
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+          <parameters>${controllers_file}</parameters>
+        </plugin>
+      </gazebo>
+    </xacro:if>
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,33 @@
+# Controllers shared by sim and (eventually) the real rover.
+# Joint order below is the order of values in /leg_position_controller/commands.
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    leg_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+leg_position_controller:
+  ros__parameters:
+    joints:
+      - lf_hip_joint
+      - lf_femur_joint
+      - lf_tibia_joint
+      - lm_hip_joint
+      - lm_femur_joint
+      - lm_tibia_joint
+      - lr_hip_joint
+      - lr_femur_joint
+      - lr_tibia_joint
+      - rf_hip_joint
+      - rf_femur_joint
+      - rf_tibia_joint
+      - rm_hip_joint
+      - rm_femur_joint
+      - rm_tibia_joint
+      - rr_hip_joint
+      - rr_femur_joint
+      - rr_tibia_joint

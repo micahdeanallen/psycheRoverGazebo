@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!--
+  Psyche hexapod, proof-of-concept model built from primitive shapes.
+  Dimensions: params.xacro. Leg geometry: leg.xacro. Hardware seam: hexapod.ros2_control.xacro.
+
+  Args:
+    use_sim           true = Gazebo hardware plugin, false = mock hardware
+    controllers_file  absolute path to controllers.yaml (the launch files pass this)
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="psyche_hexapod">
+
+  <xacro:arg name="use_sim" default="true"/>
+  <xacro:arg name="controllers_file" default=""/>
+
+  <xacro:include filename="params.xacro"/>
+  <xacro:include filename="inertia.xacro"/>
+  <xacro:include filename="leg.xacro"/>
+  <xacro:include filename="hexapod.ros2_control.xacro"/>
+
+  <material name="frame_black"><color rgba="0.15 0.15 0.15 1"/></material>
+  <material name="bracket_pink"><color rgba="0.95 0.3 0.7 1"/></material>
+  <material name="servo_blue"><color rgba="0.2 0.45 0.9 1"/></material>
+  <material name="servo_purple"><color rgba="0.6 0.3 0.8 1"/></material>
+  <material name="foot_grey"><color rgba="0.7 0.7 0.7 1"/></material>
+
+  <!-- Root frame at the body center (no mass, keeps KDL happy) -->
+  <link name="base_link"/>
+
+  <link name="chassis_link">
+    <visual>
+      <geometry><box size="${body_length} ${body_width} ${body_height}"/></geometry>
+      <material name="frame_black"/>
+    </visual>
+    <collision>
+      <geometry><box size="${body_length} ${body_width} ${body_height}"/></geometry>
+    </collision>
+    <xacro:box_inertial m="${body_mass}" x="${body_length}" y="${body_width}" z="${body_height}"/>
+  </link>
+  <joint name="chassis_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="chassis_link"/>
+  </joint>
+
+  <!-- Six legs: front / middle / rear on each side -->
+  <xacro:leg name="lf" x="${leg_x_offset + leg_spacing}" side="1"/>
+  <xacro:leg name="lm" x="${leg_x_offset}"               side="1"/>
+  <xacro:leg name="lr" x="${leg_x_offset - leg_spacing}" side="1"/>
+  <xacro:leg name="rf" x="${leg_x_offset + leg_spacing}" side="-1"/>
+  <xacro:leg name="rm" x="${leg_x_offset}"               side="-1"/>
+  <xacro:leg name="rr" x="${leg_x_offset - leg_spacing}" side="-1"/>
+
+  <xacro:hexapod_ros2_control use_sim="$(arg use_sim)" controllers_file="$(arg controllers_file)"/>
+
+</robot>
